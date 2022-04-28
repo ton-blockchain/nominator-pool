@@ -1,0 +1,7 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+
+"5000000000" $>GR =: amount
+
+<b amount Gram, b> <s sbits .
+

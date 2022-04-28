@@ -1,0 +1,1 @@
+func -SPA  -o pool.fif stdlib.fc pool.fc

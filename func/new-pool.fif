@@ -1,0 +1,60 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " $0 type ." <validator_address> <validator_reward_share> <max_nominators_count> <min_validator_stake> <min_nominator_stake> <file-base>" cr
+  ."Creates a new nominator pool" cr 1 halt
+} : usage
+
+// todo: check for args count
+
+-1 =: wc
+
+$1 true parse-load-address drop swap 1+ abort"only masterchain smartcontracts may participate in validator elections"
+constant validator_address
+$2 parse-int =: validator_reward_share
+$3 parse-int =: max_nominators_count
+$4 $>GR =: min_validator_stake
+$5 $>GR =: min_nominator_stake
+$6 =: file-base
+
+// todo: check validator_reward_share <= 10000
+
+."Creating new pool in workchain " wc . cr
+
+<{ SETCP0 ACCEPT
+   "pool.fif" include PUSHREF SETCODE
+}>c
+
+// >libref
+// code
+<b 0 8 u, // state
+   0 16 u, // nominators count
+   0 Gram, // stake_amount_sent
+   0 Gram, // validator_amount
+   <b validator_address 256 u, validator_reward_share 16 u, max_nominators_count 16 u, min_validator_stake Gram, min_nominator_stake Gram, b> ref, // config
+   dictnew dict, // nominators
+   dictnew dict, // withdraw_requests
+   0 32 u, // stake_sent_time
+   0 256 u, // validator_set_hash
+   0 8 u, // validator_set_changes_count
+   0 32 u, // validator_set_change_time
+   0 32 u, // stake_held_for
+   dictnew dict, // config_proposal_votings
+b> // data
+null // no libraries
+<b b{0011} s, 3 roll ref, rot ref, swap dict, b> constant StateInit // create StateInit
+
+StateInit
+dup ."StateInit: " <s csr. cr
+dup hashu wc swap 2dup 2constant wallet_addr
+."new pool address = " 2dup .addr cr
+2dup file-base +".addr" save-address-verbose
+."Non-bounceable address (for init): " 2dup 7 .Addr cr
+."Bounceable address (for later access): " 6 .Addr cr
+
+<b b{1000100} s, wallet_addr addr, b{000011} s, StateInit ref, b{0} s, b>
+dup ."External message for initialization is " <s csr. cr
+2 boc+>B dup Bx. cr
+file-base +"-query.boc" tuck B>file
+."(Saved pool creating query to file " type .")" cr
