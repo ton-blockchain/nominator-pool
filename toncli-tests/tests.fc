@@ -1,0 +1,310 @@
+
+
+int validator_address() {
+    return 100500;
+}
+
+int test_elector_address() {
+    return 12345;
+}
+
+;; 10%
+int validator_reward_share() {
+    return 1000;
+}
+
+int max_nominators_count() {
+    return 4000;
+}
+
+int nano() inline {
+    return 1000000000;
+}
+
+;; 500 TON
+int min_validator_stake() {
+    return 500 * nano(); 
+}
+
+;; 10 TON
+int min_nominator_stake() {
+    return 10 * nano();
+}
+
+cell gen_config() inline_ref {
+    var (int _gas_used, stack) = invoke_method(pack_config, 
+            [
+                validator_address(), 
+                validator_reward_share(), 
+                max_nominators_count(), 
+                min_validator_stake(), 
+                min_nominator_stake()
+            ]);
+    [cell c] = stack;            
+    return c;
+}
+
+() initialize_state() impure inline_ref {
+    int state = 0;
+    int nominators_count = 0;
+    int stake_amount_sent = 0;
+    int validator_amount = 0;
+    cell config = gen_config();
+    cell nominators = new_dict();
+    cell withdraw_requests = new_dict();
+    int stake_at = 0;
+    int saved_validator_set_hash = 0;
+    int validator_set_changes_count = 0;
+    int validator_set_change_time = 0;
+    int stake_held_for = 15;
+    cell config_proposal_votings = new_dict();
+
+
+    invoke_method(save_data, 
+        [
+            state,
+            nominators_count,
+            stake_amount_sent, 
+            validator_amount, 
+            config, 
+            nominators, 
+            withdraw_requests, 
+            stake_at, 
+            saved_validator_set_hash, 
+            validator_set_changes_count, 
+            validator_set_change_time, 
+            stake_held_for, 
+            config_proposal_votings
+        ]);
+}
+
+cell gen_validators_set(int utime_until) {
+    int utime_since = 0;
+
+    return begin_cell()
+        .store_uint(0x12, 8)
+        .store_uint(utime_since, 32)
+        .store_uint(utime_until, 32)
+        .end_cell();
+}
+
+cell gen_validators_config() {
+    int validators_elected_for = 10;
+    int elections_start_before = 10;
+    int elections_end_before = 10;
+    int stake_held_for = 10;
+    
+    return begin_cell()
+        .store_uint(validators_elected_for, 32)
+        .store_uint(elections_start_before, 32)
+        .store_uint(elections_end_before, 32)
+        .store_uint(stake_held_for, 32)
+        .end_cell();
+
+}
+
+() initialize_global_config(int validators_utime_until) impure {
+    cell global_config = new_dict();
+    global_config~udict_set_ref(32, 1, begin_cell().store_uint(test_elector_address(), 256).end_cell());
+    global_config~udict_set_ref(32, 15, gen_validators_config());
+    global_config~udict_set_ref(32, 34, gen_validators_set(validators_utime_until));
+    set_global_config(global_config);
+}
+
+;; returns gas usage
+int send_message(slice addr, int msg_value, slice msg_body) impure {
+    cell msg = begin_cell()
+        .store_uint(0x2, 4)
+        .store_slice(addr)
+        .store_slice(addr) ;; should be contract's address, but who cares?
+        .store_coins(msg_value)
+        .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1)
+        .store_uint(1, 1)
+        .store_ref(begin_cell().store_slice(msg_body).end_cell())
+        .end_cell();
+
+    var (int gas_used, _) = invoke_method(recv_internal, [msg_value, msg, msg_body]);
+    return gas_used;
+}
+
+int deposit(int addr, int grams) impure {
+    int msg_value = grams * nano();
+
+    slice msg_body = begin_cell()
+        .store_uint(0, 32) ;; op
+        .store_uint(100, 8) ;; 'd' for 'deposit'
+        .end_cell().begin_parse();
+    
+    return send_message(make_address(0, addr), msg_value, msg_body);
+}
+
+int validator_deposit(int grams) impure {
+    int msg_value = grams * nano();
+    int query_id = rand(1 << 64);
+
+    slice msg_body = begin_cell()
+        .store_uint(4, 32) ;; op
+        .store_uint(query_id, 64) 
+        .end_cell().begin_parse();
+    
+    return send_message(make_address(-1, validator_address()), msg_value, msg_body);
+}
+
+slice new_stake_msg() {
+    cell signature = begin_cell().store_uint(0, 256).store_uint(0, 256).end_cell();
+    return begin_cell()
+        .store_uint(0, 256) ;; pub key
+        .store_uint(0, 32)  ;; stake_at
+        .store_uint(5, 32)  ;; max_factor
+        .store_uint(0, 256) ;; adnl addr
+        .store_ref(signature)
+        .end_cell().begin_parse();
+}
+
+int new_stake(int grams) impure {
+    int msg_value = nano(); ;; 1 TON
+    int query_id = rand(1 << 64);
+
+    int stake_value = grams * nano();
+    slice stake_msg = new_stake_msg();
+
+    slice msg_body = begin_cell()
+        .store_uint(op::new_stake(), 32) ;; op
+        .store_uint(query_id, 64) 
+        .store_coins(stake_value)
+        .store_slice(stake_msg)
+        .end_cell().begin_parse();
+
+    ;; ideally balance should be calculated automatically, but here we just make sure there are enough
+    set_balance([stake_value + nano() *  2, null()]); 
+    
+    int gas_used = send_message(make_address(-1, validator_address()), msg_value, msg_body);
+    
+    ;; TODO: check generated actions?
+    throw_if(101, slice_empty?(get_actions()));
+
+    return gas_used;
+}
+
+int send_validator_set_update(int id) impure {
+    initialize_global_config(id);
+
+    slice msg_body = begin_cell()
+        .store_uint(6, 32) ;; op
+        .store_uint(rand(1 << 64), 64) ;; query_id
+        .end_cell().begin_parse();
+
+    return send_message(make_address(0, 0), nano(), msg_body);
+}
+
+int send_recover_stake() {
+    slice msg_body = begin_cell()
+        .store_uint(op::recover_stake(), 32)    ;; op
+        .store_uint(rand(1 << 64), 64)          ;; query_id
+        .end_cell().begin_parse();
+
+    return send_message(make_address(0, 0), nano(), msg_body);
+}
+
+int send_recover_stake_ok(int grams_received) {
+    slice msg_body = begin_cell()
+        .store_uint(op::recover_stake_ok(), 32)    ;; op
+        .store_uint(rand(1 << 64), 64)             ;; query_id
+        .end_cell().begin_parse();
+
+    return send_message(make_address(-1, test_elector_address()), grams_received * nano(), msg_body);
+}
+
+int send_withdraw(int addr) {
+     slice msg_body = begin_cell()
+        .store_uint(0, 32) ;; op
+        .store_uint(119, 8) ;; 'w' for 'withdraw'
+        .end_cell().begin_parse();
+
+    return send_message(make_address(0, addr), nano(), msg_body);
+}
+
+int withdraw_some(cell will_withdraw_later) impure {
+    int addr = -1;
+    int gas_used_sum = 0;
+    int cnt_queries = 0;
+    do {
+        (addr, _, int found) = will_withdraw_later.udict_get_next?(256, addr);
+        if (found) {
+            gas_used_sum += send_withdraw(addr);
+            cnt_queries += 1;
+        }
+    } until (~ found);
+    return cnt_queries == 0 ? 0 : (gas_used_sum / cnt_queries);
+}
+
+_ test_specific_nominators_num(int nominators_num) {
+    initialize_state();
+    initialize_global_config(1);
+    
+    int gas_used_nominators_register = 0;
+    int total_money = 0;
+
+    cell will_withdraw_later = new_dict();
+
+    repeat(nominators_num) {
+        int addr = random();
+        int grams = 500 + rand(500);
+        total_money += grams - 1; ;; deposit fee
+        int gas_used = deposit(addr, grams);
+        gas_used_nominators_register += gas_used;
+
+        if (rand(2) == 0) {
+            will_withdraw_later~udict_set_builder(256, addr, begin_cell());
+        }
+    }
+
+    int gas_used_validator_deposit = validator_deposit(min_validator_stake() / nano() + 10);
+    int gas_used_new_stake = new_stake(total_money);
+
+    int gas_used_validator_set_update_1 = send_validator_set_update(2);
+    send_validator_set_update(3);
+    send_validator_set_update(4);
+    
+    int gas_used_recover_stake = send_recover_stake();
+    int gas_used_recever_stake_ok = send_recover_stake_ok(muldiv(total_money, 11, 10));
+
+    int gas_used_withdraw_average = withdraw_some(will_withdraw_later);
+
+    return (
+        gas_used_nominators_register / nominators_num, 
+        gas_used_validator_deposit, 
+        gas_used_new_stake, 
+        gas_used_validator_set_update_1, 
+        gas_used_recover_stake,
+        gas_used_recever_stake_ok, 
+        gas_used_withdraw_average);
+}
+
+_ __test_10_nominators() {
+    return test_specific_nominators_num(10);
+}
+
+_ __test_50_nominators() {
+    return test_specific_nominators_num(50);
+}
+
+_ __test_100_nominators() {
+    return test_specific_nominators_num(100);
+}
+
+_ __test_500_nominators() {
+    return test_specific_nominators_num(500);
+}
+
+_ __test_1000_nominators() {
+    return test_specific_nominators_num(1000);
+}
+
+_ __test_2000_nominators() {
+    return test_specific_nominators_num(2000);
+}
+
+_ __test_4000_nominators() {
+    return test_specific_nominators_num(4000);
+}

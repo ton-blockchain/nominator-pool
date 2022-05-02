@@ -2,3 +2,5 @@
 *.iml
 func/test.fif
 func/compiled.fif
+toncli-tests/build/contract.fif
+toncli-tests/build/contract_tests.fif
