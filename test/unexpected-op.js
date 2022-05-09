@@ -32,7 +32,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
             "sender": '0:' + ANYBODY_ADDR,
             "amount": 10 * TON,
             "body": [
-                "uint32", 9,
+                "uint32", 8,
                 "uint64", 123, // query_id
             ],
             "exit_code": 70
@@ -47,7 +47,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
             "exit_code": 64
         },
         {
-            "sender": '0:' + ANYBODY_ADDR,
+            "sender": '0:' + NOMINATOR_1_ADDR,
             "amount": 10 * TON,
             "body": [
                 "uint32", 0,
