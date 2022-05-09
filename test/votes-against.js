@@ -29,23 +29,36 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
     'path': './func/',
     'fc': FC,
     "configParams": CONFIG_PARAMS,
-    'data': storage({}),
+    'data': storage({
+        0x123: ['uint256->any', {
+            ['0x' + VALIDATOR_ADDR]: ['int1', -1, 'int32', 1628090356]
+        }, 'int32', 1628090356]
+    }),
     'in_msgs': [
         {
-            "sender": '-1:' + VALIDATOR_ADDR,
+            "sender": '0:' + NOMINATOR_1_ADDR,
             "amount": 8 * TON,
             "body": [
                 "uint32", 0, // op = 0 - text comment
-                "uint8", 121, // "y"
+                "uint8", 110, // "n"
                 "uint256", "21796157974083048550319244236929488537086114760591164995662604048548353814576", // 0000
                 "uint256", "21796157974083048550319244236929488537086114760591164995662604048548353880627", // 00123
             ],
             "new_data": storage({
-             0x123: ['uint256->any', {
-                 ['0x' + VALIDATOR_ADDR]: ['int1', -1, 'int32', 1628090356]
-             }, 'int32', 1628090356]
+                0x123: ['uint256->any', {
+                    ['0x' + VALIDATOR_ADDR]: ['int1', -1, 'int32', 1628090356],
+                    ['0x' + NOMINATOR_1_ADDR]: ['int1', 0, 'int32', 1628090356]
+                }, 'int32', 1628090356]
             }),
-            "out_msgs": []
+            "out_msgs": [
+                {
+                    "type": "Internal",
+                    "to": "0:" + NOMINATOR_1_ADDR,
+                    "amount": 0,
+                    "sendMode": 64 + 2,
+                    "body": [],
+                }
+            ]
         },
     ],
 });

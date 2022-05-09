@@ -44,7 +44,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
                 "uint32", 0,
                 "uint64", 123, // text
             ],
-            "exit_code": 63
+            "exit_code": 64
         },
         {
             "sender": '0:' + ANYBODY_ADDR,

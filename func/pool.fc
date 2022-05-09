@@ -28,6 +28,42 @@ int VOTES_LIFETIME() asm "2592000 PUSHINT"; ;; 30 days
 
 int binary_log_ceil(int x) asm "UBITSIZE";
 
+(slice, int) ~load_hex_symbol(slice comment) {
+  int n = comment~load_uint(8);
+  n = n - 48;
+  throw_unless(329, n >= 0);
+  if (n < 10) {
+    return (comment, (n));
+  }
+  n = n - 7;
+  throw_unless(329, n >= 0);
+  if (n < 16) {
+    return (comment, (n));
+  }
+  n = n - 32;
+  throw_unless(329, (n >= 0) & (n < 16));
+  return (comment, n);
+}
+
+(slice, int) ~load_text_hex_number(slice comment, int byte_length) {
+  int current_slice_length = comment.slice_bits() / 8;
+  int result = 0;
+  int counter = 0;
+  repeat (2 * byte_length) {
+    result = result * 16 + comment~load_hex_symbol();
+    counter = counter + 1;
+    if (counter == current_slice_length) {
+      if (comment.slice_refs() == 1) {
+        cell _cont = comment~load_ref();
+        comment = _cont.begin_parse();
+        current_slice_length = comment.slice_bits() / 8;
+        counter = 0;
+      }
+    }
+  }
+  return (comment, result);
+}
+
 slice make_address(int wc, int addr) inline_ref {
     return begin_cell()
            .store_uint(4, 3).store_int(wc, 8).store_uint(addr, ADDR_SIZE()).end_cell().begin_parse();
@@ -329,18 +365,22 @@ cell distribute_share(int reward, cell nominators) inline_ref {
    (int state, int nominators_count, int stake_amount_sent, int validator_amount, (int validator_address, int validator_reward_share, int max_nominators_count, int min_validator_stake, int min_nominator_stake), cell nominators, cell withdraw_requests, int stake_at, int saved_validator_set_hash, int validator_set_changes_count, int validator_set_change_time, int stake_held_for, cell config_proposal_votings) = load_data();
 
     if (op == 0) {
-        ;; We use simple text comments for withdraw/deposit nominator so nominators can do it from any wallet app.
+        ;; We use simple text comments for nominator operations so nominators can do it from any wallet app.
         ;; In other cases, they will need to put a stake on a browser extension, or use scripts, which can be inconvenient.
 
-        throw_unless(61, sender_wc == 0); ;; nominators only in basechain
-        throw_unless(62, sender_addr != validator_address);
+        ;; Throw on any unexpected request so that the stake is bounced back to the nominator in case of a typo.
 
-        ;; throw on any unexpected request so that the stake is bounced back to the nominator in case of a typo
-        throw_unless(63, in_msg_body.slice_bits() == 8);
-        int text = in_msg_body~load_uint(8);
-        throw_unless(64, (text == 100) | (text == 119));
+        int action = in_msg_body~load_uint(8);
+        int is_vote = (action == 121) | (action == 110); ;; "y" or "n"
+        throw_unless(64, (action == 100) | (action == 119) | is_vote); ;; "d" or "w" or "y" or "n"
 
-        if (text == 100) { ;; "d" - deposit nominator (any time, will take effect in the next round)
+        if (~ is_vote) {
+            in_msg_body.end_parse();
+            throw_unless(61, sender_wc == 0); ;; nominators only in basechain
+            throw_unless(62, sender_addr != validator_address);
+        }
+
+        if (action == 100) { ;; "d" - deposit nominator (any time, will take effect in the next round)
             (slice nominator, int found) = nominators.udict_get?(ADDR_SIZE(), sender_addr);
 
             if (~ found) {
@@ -362,7 +402,7 @@ cell distribute_share(int reward, cell nominators) inline_ref {
             nominators~udict_set_builder(ADDR_SIZE(), sender_addr, pack_nominator(amount, pending_deposit_amount));
         }
 
-        if (text == 119) { ;; "w" - withdraw request (any time)
+        if (action == 119) { ;; "w" - withdraw request (any time)
             if (state == 0) {
                 (nominators, withdraw_requests, int new_balance, nominators_count) = withdraw_nominator(sender_addr, nominators, withdraw_requests, balance, nominators_count);
                 if (new_balance - msg_value >= MIN_TONS_FOR_STORAGE()) {
@@ -372,6 +412,47 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                 (slice nominator, int found) = nominators.udict_get?(ADDR_SIZE(), sender_addr);
                 throw_unless(69, found);
                 withdraw_requests~udict_set_builder(ADDR_SIZE(), sender_addr, begin_cell());
+                send_excesses(sender_address);
+            }
+        }
+
+        if (is_vote) {
+            int authorized = (sender_wc == -1) & (sender_addr == validator_address);
+
+            if (~ authorized) {
+                throw_unless(121, sender_wc == 0);
+                (slice nominator, authorized) = nominators.udict_get?(ADDR_SIZE(), sender_addr);
+                throw_unless(122, authorized);
+                (int amount, int pending_deposit_amount) = unpack_nominator(nominator);
+                throw_unless(123, amount > 0);
+            }
+
+            int proposal_hash = in_msg_body~load_text_hex_number(32);
+            in_msg_body.end_parse();
+            int support = action == 121;
+
+            (slice votes_slice, int found) = config_proposal_votings.udict_get?(256, proposal_hash);
+
+            if (~ found) {
+                ;; require higher fee to prevent dictionary spam
+                int fee = ONE_TON();
+                int power = cell_depth(config_proposal_votings);
+                repeat (power) {
+                    fee = muldiv(fee, 15, 10);
+               }
+               throw_unless(123, msg_value >= fee);
+            }
+
+            (cell votes_dict, int votes_create_time) = found ? (votes_slice~load_dict(), votes_slice~load_uint(32)) : (new_dict(), now());
+
+            (_, int vote_found) = votes_dict.udict_get?(256, sender_addr);
+            throw_if(124, vote_found);
+            votes_dict~udict_set_builder(256, sender_addr, begin_cell().store_int(support, 1).store_uint(now(), 32));
+
+            builder new_votes = begin_cell().store_dict(votes_dict).store_uint(votes_create_time, 32);
+            config_proposal_votings~udict_set_builder(256, proposal_hash, new_votes);
+
+            if (found) {
                 send_excesses(sender_address);
             }
         }
@@ -425,7 +506,7 @@ cell distribute_share(int reward, cell nominators) inline_ref {
         } else {
 
             ;; throw on any unexpected request so that the coins is bounced back to the sender in case of a typo
-            throw_unless(70, ((op >= 1) & (op <= 8)) | (op == op::recover_stake()) | (op == op::new_stake()));
+            throw_unless(70, ((op >= 1) & (op <= 7)) | (op == op::recover_stake()) | (op == op::new_stake()));
 
             if (op == 1) {
                 ;; just accept coins
@@ -463,47 +544,7 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                 send_excesses(sender_address);
             }
 
-            if (op == 7) {
-                int authorized = (sender_wc == -1) & (sender_addr == validator_address);
-
-                if (~ authorized) {
-                    throw_unless(121, sender_wc == 0);
-                    (slice nominator, authorized) = nominators.udict_get?(ADDR_SIZE(), sender_addr);
-                    throw_unless(122, authorized);
-                    (int amount, int pending_deposit_amount) = unpack_nominator(nominator);
-                    throw_unless(123, amount > 0);
-                }
-
-                int proposal_hash = in_msg_body~load_uint(256);
-                int support = in_msg_body~load_int(1);
-
-                (slice votes_slice, int found) = config_proposal_votings.udict_get?(256, proposal_hash);
-
-                if (~ found) {
-                    ;; require higher fee to prevent dictionary spam
-                    int fee = ONE_TON();
-                    int power = cell_depth(config_proposal_votings);
-                    repeat (power) {
-                        fee = muldiv(fee, 15, 10);
-                    }
-                    throw_unless(123, msg_value >= fee);
-                }
-
-                (cell votes_dict, int votes_create_time) = found ? (votes_slice~load_dict(), votes_slice~load_uint(32)) : (new_dict(), now());
-
-                (_, int vote_found) = votes_dict.udict_get?(256, sender_addr);
-                throw_if(124, vote_found);
-                votes_dict~udict_set_builder(256, sender_addr, begin_cell().store_int(support, 1).store_uint(now(), 32));
-
-                builder new_votes = begin_cell().store_dict(votes_dict).store_uint(votes_create_time, 32);
-                config_proposal_votings~udict_set_builder(256, proposal_hash, new_votes);
-
-                if (found) {
-                    send_excesses(sender_address);
-                }
-            }
-
-            if (op == 8) {
+            if (op == 7) { ;; clean up outdating votings
                 int t = now();
                 int proposal_hash = -1;
                 do {

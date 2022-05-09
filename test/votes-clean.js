@@ -40,7 +40,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
             "sender": '0:' + ANYBODY_ADDR,
             "amount": 8 * TON,
             "body": [
-                "uint32", 8, // clean old votes
+                "uint32", 7, // clean old votes
                 "uint64", 123, // query_id
             ],
             "new_data": storage({}),
