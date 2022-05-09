@@ -6,13 +6,13 @@
 ;; Nominators' wallets must be in the basechain.
 ;; The validator in most cases have two pools (for even and odd validation rounds).
 
-int op::new_stake() asm "0x4e73744b PUSHINT"; ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L621
-int op::new_stake_error() asm "0xee6f454c PUSHINT"; ;; return_stake https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L169
-int op::new_stake_ok() asm "0xf374484c PUSHINT"; ;; send_confirmation https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L173
+int op::new_stake() asm "0x4e73744b PUSHINT"; ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L621
+int op::new_stake_error() asm "0xee6f454c PUSHINT"; ;; return_stake https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L169
+int op::new_stake_ok() asm "0xf374484c PUSHINT"; ;; send_confirmation https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L173
 
-int op::recover_stake() asm "0x47657424 PUSHINT"; ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L625
-int op::recover_stake_error() asm "0xfffffffe PUSHINT"; ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L407
-int op::recover_stake_ok() asm "0xf96f7324 PUSHINT"; ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L426
+int op::recover_stake() asm "0x47657424 PUSHINT"; ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L625
+int op::recover_stake_error() asm "0xfffffffe PUSHINT"; ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L407
+int op::recover_stake_ok() asm "0xf96f7324 PUSHINT"; ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L426
 
 int ADDR_SIZE() asm "256 PUSHINT";
 int BOUNCEABLE() asm "0x18 PUSHINT";
@@ -31,7 +31,7 @@ slice make_address(int wc, int addr) inline_ref {
            .store_uint(4, 3).store_int(wc, 8).store_uint(addr, ADDR_SIZE()).end_cell().begin_parse();
 }
 
-;; https://github.com/newton-blockchain/ton/blob/ae5c0720143e231c32c3d2034cfe4e533a16d969/crypto/block/block.tlb#L584
+;; https://github.com/ton-blockchain/ton/blob/ae5c0720143e231c32c3d2034cfe4e533a16d969/crypto/block/block.tlb#L584
 int is_elector_address(int wc, int addr) inline_ref {
   return (wc == -1) & (config_param(1).begin_parse().preload_uint(ADDR_SIZE()) == addr);
 }
@@ -41,11 +41,11 @@ slice elector_address() inline_ref {
     return make_address(-1, elector);
 }
 
-;; https://github.com/newton-blockchain/ton/blob/ae5c0720143e231c32c3d2034cfe4e533a16d969/crypto/block/block.tlb#L721
+;; https://github.com/ton-blockchain/ton/blob/ae5c0720143e231c32c3d2034cfe4e533a16d969/crypto/block/block.tlb#L721
 int max_recommended_punishment_for_validator_misbehaviour(int stake) inline_ref {
     cell cp = config_param(40);
     if (cell_null?(cp)) {
-        return 101000000000; ;; 101 TON - https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/lite-client/lite-client.cpp#L3678
+        return 101000000000; ;; 101 TON - https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/lite-client/lite-client.cpp#L3678
     }
 
     slice cs = cp.begin_parse();
@@ -62,7 +62,7 @@ int max_recommended_punishment_for_validator_misbehaviour(int stake) inline_ref 
          cs~load_uint(16), cs~load_uint(16), cs~load_uint(16)
         );
 
-     ;; https://github.com/newton-blockchain/ton/blob/master/lite-client/lite-client.cpp#L3721
+     ;; https://github.com/ton-blockchain/ton/blob/master/lite-client/lite-client.cpp#L3721
      int fine = default_flat_fine;
      int fine_part = default_proportional_fine;
 
@@ -72,23 +72,23 @@ int max_recommended_punishment_for_validator_misbehaviour(int stake) inline_ref 
      fine = fine * long_flat_mult; fine = fine >> 8;
      fine_part = fine_part * long_proportional_mult; fine_part = fine_part >> 8;
 
-     return min(stake, fine + muldiv(stake, fine_part, 1 << 32)); ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L529
+     return min(stake, fine + muldiv(stake, fine_part, 1 << 32)); ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L529
 }
 
-;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L632
-;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L118
+;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L632
+;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L118
 int get_validator_config() inline_ref {
     slice cs = config_param(15).begin_parse();
     (int validators_elected_for, int elections_start_before, int elections_end_before, int stake_held_for) = (cs~load_uint(32), cs~load_uint(32), cs~load_uint(32), cs.preload_uint(32));
     return stake_held_for;
 }
 
-;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L712
+;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L712
 (int, int, cell) get_current_validator_set() inline_ref {
     cell vset = config_param(34); ;; current validator set
     slice cs = vset.begin_parse();
-    ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L579
-    ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/config-code.fc#L49
+    ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/block/block.tlb#L579
+    ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/config-code.fc#L49
     throw_unless(9, cs~load_uint(8) == 0x12);  ;; validators_ext#12 only
     int utime_since = cs~load_uint(32); ;; actual start unixtime of current validation round
     int utime_until = cs~load_uint(32); ;; supposed end unixtime of current validation round (utime_until = utime_since + validators_elected_for); unfreeze_at = utime_until + stake_held_for
@@ -96,7 +96,7 @@ int get_validator_config() inline_ref {
 }
 
 ;; check the validity of the new_stake message
-;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L208
+;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L208
 int check_new_stake_msg(slice cs) impure inline_ref {
     var validator_pubkey = cs~load_uint(256);
     var stake_at = cs~load_uint(32);
@@ -525,13 +525,13 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                 ;; So we are waiting for the change of 3 validator sets.
 
                 ;; ADDITIONAL NOTE:
-                ;; In a special case (if the network was down), the config theoretically can refuse the elector to save a new round after election - https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/config-code.fc#L494
-                ;; and the elector will start a new election - https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L364
+                ;; In a special case (if the network was down), the config theoretically can refuse the elector to save a new round after election - https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/config-code.fc#L494
+                ;; and the elector will start a new election - https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L364
                 ;; in this case, our pool will have to skip the round, but it will be able to recover stake later
 
                 throw_unless(111, validator_set_changes_count >= 2);
                 throw_unless(112, (validator_set_changes_count > 2) | (now() - validator_set_change_time > stake_held_for + 60));
-                ;; https://github.com/newton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L887
+                ;; https://github.com/ton-blockchain/ton/blob/b38d227a469666d83ac535ad2eea80cb49d911b8/crypto/smartcont/elector-code.fc#L887
 
                 cell payload = begin_cell().store_uint(op::recover_stake(), 32).store_uint(query_id, 64).end_cell();
                 send_msg(elector_address(), 0, payload, BOUNCEABLE(), SEND_MODE_REMAINING_AMOUNT()); ;; bounceable,  carry all the remaining value of the inbound message, fee deducted from amount, revert on errors
