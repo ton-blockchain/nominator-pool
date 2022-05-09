@@ -467,6 +467,8 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                     throw_unless(121, sender_wc == 0);
                     (slice nominator, authorized) = nominators.udict_get?(ADDR_SIZE(), sender_addr);
                     throw_unless(122, authorized);
+                    (int amount, int pending_deposit_amount) = unpack_nominator(nominator);
+                    throw_unless(123, amount > 0);
                 }
 
                 int proposal_hash = in_msg_body~load_uint(256);

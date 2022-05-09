@@ -40,5 +40,6 @@ node test/elector.js &&
 node test/votes-create-ok.js &&
 node test/votes-create-denied.js &&
 node test/votes-ok.js &&
+node test/votes-no-deposit.js &&
 node test/votes-clean.js &&
 echo "OK"

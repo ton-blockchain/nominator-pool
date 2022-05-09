@@ -415,7 +415,7 @@ ${makeGetMethods(data.get_methods)}
 
 const funcer = (options, data) => {
     const path = data.path;
-
+    console.log(process.argv.join(' '));
     const compileFuncCmd = 'func -SP ' + ' -o ' + path + 'compiled.fif ' + data.fc.map(fc => path + fc).join(' ');
     const runFiftCmd = 'fift ' + path + 'test.fif';
     const testFif = makeTestFif(data);

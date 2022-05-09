@@ -36,7 +36,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
     }),
     'in_msgs': [
         {
-            "sender": '0:' + NOMINATOR_1_ADDR,
+            "sender": '0:' + NOMINATOR_2_ADDR,
             "amount": 8 * TON,
             "body": [
                 "uint32", 7, // vote
@@ -44,21 +44,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
                 "uint256", 321, // proposal_hash
                 "int1", 0, // support
             ],
-            "new_data": storage({
-                321: ['uint256->any', {
-                    ['0x' + VALIDATOR_ADDR]: ['int1', -1, 'int32', 1628090356],
-                    ['0x' + NOMINATOR_1_ADDR]: ['int1', 0, 'int32', 1628090356]
-                }, 'int32', 1628090356]
-            }),
-            "out_msgs": [
-                {
-                    "type": "Internal",
-                    "to": "0:" + NOMINATOR_1_ADDR,
-                    "amount": 0,
-                    "sendMode": 64 + 2,
-                    "body": [],
-                }
-            ]
+            "exit_code": 123
         },
     ],
 });
