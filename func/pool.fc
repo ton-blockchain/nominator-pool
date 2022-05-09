@@ -26,6 +26,8 @@ int DEPOSIT_PROCESSING_FEE() asm "1000000000 PUSHINT"; ;; 1 TON
 int MIN_STAKE_TO_SEND() asm "500000000000 PUSHINT"; ;; 500 TON
 int VOTES_LIFETIME() asm "2592000 PUSHINT"; ;; 30 days
 
+int binary_log_ceil(int x) asm "UBITSIZE";
+
 slice make_address(int wc, int addr) inline_ref {
     return begin_cell()
            .store_uint(4, 3).store_int(wc, 8).store_uint(addr, ADDR_SIZE()).end_cell().begin_parse();
@@ -356,6 +358,7 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                 pending_deposit_amount += msg_value;
             }
             throw_unless(67, amount + pending_deposit_amount >= min_nominator_stake);
+            throw_unless(68, cell_depth(nominators) < max(5, binary_log_ceil(nominators_count) * 2) ); ;; prevent dict depth ddos
             nominators~udict_set_builder(ADDR_SIZE(), sender_addr, pack_nominator(amount, pending_deposit_amount));
         }
 
