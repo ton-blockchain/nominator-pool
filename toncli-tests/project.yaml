@@ -1,0 +1,5 @@
+contract:
+  func:
+    - ../func/pool.fc
+  tests:
+    - tests.fc
