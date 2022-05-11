@@ -299,6 +299,7 @@ cell distribute_share(int reward, cell nominators) inline_ref {
         }
     } until (~ f);
 
+    cell new_nominators = new_dict();
     address = -1;
     do {
         (address, slice cs, int f) = nominators.udict_get_next?(ADDR_SIZE(), address);
@@ -311,11 +312,11 @@ cell distribute_share(int reward, cell nominators) inline_ref {
                 }
             }
             amount += pending_deposit_amount;
-            nominators~udict_set_builder(ADDR_SIZE(), address, pack_nominator(amount, 0));
+            new_nominators~udict_set_builder(ADDR_SIZE(), address, pack_nominator(amount, 0));
         }
     } until (~ f);
 
-    return nominators;
+    return new_nominators;
 }
 
 () recv_internal(int msg_value, cell in_msg_full, slice in_msg_body) impure {

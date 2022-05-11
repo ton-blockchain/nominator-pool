@@ -477,7 +477,7 @@ PROGRAM{
       DUP	//  reward nominators total_amount cs address f f
       IF:<{	//  reward nominators total_amount cs address f
         s0 s2 XCHG	//  reward nominators total_amount f address cs
-        unpack_nominator INLINECALLDICT	//  reward nominators total_amount f address _40 _41
+        unpack_nominator INLINECALLDICT	//  reward nominators total_amount f address _42 _43
         DROP	//  reward nominators total_amount f address amount
         s1 s3 XCHG	//  reward nominators address f total_amount amount
         ADD	//  reward nominators address f total_amount
@@ -489,47 +489,48 @@ PROGRAM{
       NOT	//  reward nominators total_amount address _14
     }>	//  reward nominators total_amount address
     DROP	//  reward nominators total_amount
-    -1 PUSHINT	//  reward nominators total_amount address=-1
+    NEWDICT	//  reward nominators total_amount new_nominators
+    -1 PUSHINT	//  reward nominators total_amount new_nominators address=-1
     UNTIL:<{
-      256 PUSHINT	//  reward nominators total_amount address _18
-      s3 s(-1) PUXC	//  reward nominators total_amount address nominators _18
+      256 PUSHINT	//  reward nominators total_amount new_nominators address _20
+      s4 s(-1) PUXC	//  reward nominators total_amount new_nominators address nominators _20
       DICTUGETNEXT
-      NULLSWAPIFNOT2	//  reward nominators total_amount cs address f
-      DUP	//  reward nominators total_amount cs address f f
-      IF:<{	//  reward nominators total_amount cs address f
-        s0 s2 XCHG	//  reward nominators total_amount f address cs
-        unpack_nominator INLINECALLDICT	//  reward nominators total_amount f address amount pending_deposit_amount
-        s4 PUSH	//  reward nominators total_amount f address amount pending_deposit_amount total_amount
-        0 GTINT	//  reward nominators total_amount f address amount pending_deposit_amount _24
-        IF:<{	//  reward nominators total_amount f address amount pending_deposit_amount
-          s6 s1 s4 PUSH3	//  reward nominators total_amount f address amount pending_deposit_amount reward amount total_amount
-          MULDIV	//  reward nominators total_amount f address amount pending_deposit_amount _25
-          s1 s2 XCHG	//  reward nominators total_amount f address pending_deposit_amount amount _25
-          ADD	//  reward nominators total_amount f address pending_deposit_amount amount
-          DUP	//  reward nominators total_amount f address pending_deposit_amount amount amount
-          0 LESSINT	//  reward nominators total_amount f address pending_deposit_amount amount _28
-          IF:<{	//  reward nominators total_amount f address pending_deposit_amount amount
-            DROP	//  reward nominators total_amount f address pending_deposit_amount
-            0 PUSHINT	//  reward nominators total_amount f address pending_deposit_amount amount=0
-          }>	//  reward nominators total_amount f address pending_deposit_amount amount
-          SWAP	//  reward nominators total_amount f address amount pending_deposit_amount
-        }>	//  reward nominators total_amount f address amount pending_deposit_amount
-        ADD	//  reward nominators total_amount f address amount
-        0 PUSHINT	//  reward nominators total_amount f address amount _32=0
-        pack_nominator INLINECALLDICT	//  reward nominators total_amount f address _33
-        256 PUSHINT	//  reward nominators total_amount f address _33 _34
+      NULLSWAPIFNOT2	//  reward nominators total_amount new_nominators cs address f
+      DUP	//  reward nominators total_amount new_nominators cs address f f
+      IF:<{	//  reward nominators total_amount new_nominators cs address f
+        s0 s2 XCHG	//  reward nominators total_amount new_nominators f address cs
+        unpack_nominator INLINECALLDICT	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount
+        s5 PUSH	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount total_amount
+        0 GTINT	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount _26
+        IF:<{	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount
+          s7 s1 s5 PUSH3	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount reward amount total_amount
+          MULDIV	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount _27
+          s1 s2 XCHG	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount _27
+          ADD	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount
+          DUP	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount amount
+          0 LESSINT	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount _30
+          IF:<{	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount
+            DROP	//  reward nominators total_amount new_nominators f address pending_deposit_amount
+            0 PUSHINT	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount=0
+          }>	//  reward nominators total_amount new_nominators f address pending_deposit_amount amount
+          SWAP	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount
+        }>	//  reward nominators total_amount new_nominators f address amount pending_deposit_amount
+        ADD	//  reward nominators total_amount new_nominators f address amount
+        0 PUSHINT	//  reward nominators total_amount new_nominators f address amount _34=0
+        pack_nominator INLINECALLDICT	//  reward nominators total_amount new_nominators f address _35
+        256 PUSHINT	//  reward nominators total_amount new_nominators f address _35 _36
         s2 s0 s1 XC2PU
-        s6 s6 XCHG2	//  reward address total_amount f _33 address nominators _34
-        DICTUSETB	//  reward address total_amount f nominators
-        s0 s3 XCHG	//  reward nominators total_amount f address
+        s5 s5 XCHG2	//  reward nominators total_amount address f _35 address new_nominators _36
+        DICTUSETB	//  reward nominators total_amount address f new_nominators
+        s0 s2 XCHG	//  reward nominators total_amount new_nominators f address
       }>ELSE<{
-        s2 POP	//  reward nominators total_amount f address
+        s2 POP	//  reward nominators total_amount new_nominators f address
       }>
-      SWAP	//  reward nominators total_amount address f
-      NOT	//  reward nominators total_amount address _36
-    }>	//  reward nominators total_amount address
-    s2 s3 XCHG
-    3 BLKDROP	//  nominators
+      SWAP	//  reward nominators total_amount new_nominators address f
+      NOT	//  reward nominators total_amount new_nominators address _38
+    }>	//  reward nominators total_amount new_nominators address
+    s1 s4 XCHG
+    4 BLKDROP	//  new_nominators
   }>
   recv_internal PROC:<{
     //  msg_value in_msg_full in_msg_body
