@@ -32,7 +32,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
     'data': storage(100000 * TON),
     'in_msgs': [
         {
-            "contract_balance": (100000 + 400000 + 500000 + 1) * TON,
+            "contract_balance": (100000 + 400000 + 500000 + 10) * TON,
             "sender": '-1:' + VALIDATOR_ADDR,
             "amount": 10 * 1e9,
             "body": [

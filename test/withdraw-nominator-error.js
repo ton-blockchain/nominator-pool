@@ -48,7 +48,7 @@ funcer({'logVmOps': false, 'logFiftCode': false}, {
         },
         // not enough contract balance
         {
-            "contract_balance": 11 * TON,
+            "contract_balance": 21 * TON,
             "sender": '0:' + NOMINATOR_1_ADDR,
             "amount": 10 * TON,
             "body": [
