@@ -13,9 +13,15 @@
 $1 true parse-load-address drop swap 1+ abort"only masterchain smartcontracts may participate in validator elections"
 constant validator_address
 $2 parse-int =: validator_reward_share
+validator_reward_share 0 < abort" validator_reward_share cannot be less than zero"
+validator_reward_share 10000 > abort"validator_reward_share cannot be higher than 10000 (all reward is for validator)"
 $3 parse-int =: max_nominators_count
+max_nominators_count 1 < abort" max_nominators_count cannot be less than 1"
+max_nominators_count 40 > abort"we do not recommend max_nominators_count higher than 40"
 $4 $>GR =: min_validator_stake
+min_validator_stake 10000000000000 < abort"we do not recommend min_validator_stake less than at least 10000"
 $5 $>GR =: min_nominator_stake
+min_nominator_stake 100000000000 < abort"we do not recommend min_nominator_stake less than at least 100"
 $6 =: file-base
 
 // todo: check validator_reward_share <= 10000
