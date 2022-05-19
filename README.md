@@ -1,5 +1,17 @@
 # Nominator pool smart contract
 
+## Limits
+
+This pool is designed for large amounts of coins. 
+
+During development, the main criterion was the safety and simplicity of the code.
+
+The pool does not support small deposits or a large number of nominators in one pool.
+
+Target tested configuration is 10k TONs minimum nominator stake and 40 nominators maximum in the pool.
+
+The number of nominators above 40 has not been tested and we strongly advise against setting the number above 40 until such tests have been carried out.
+
 ## Get-method `get_pool_data` 
 
 Returns:
@@ -174,3 +186,15 @@ Each entry contains:
 3. vote_time - uint - unixtime when he voted.
 
 Voting results are calculated off-chain.
+
+## Integration into wallet applications
+
+For deposits, withdrawals and votes, send simple messages to the pool with the desired text comments as described above.
+
+When sending a deposit, you can store the amount that was sent in the local storage.
+
+When sending a re-deposit, add it to this amount too.
+
+To find out the current profit, call the get method `get_nominator_data(your_address)`. Profit will be (`amount + pending_deposit_amount - sent_amount_stored_in_local_storage`).
+
+To get information about a pool, call `get_pool_data` and `list_nominators` get-methods.
