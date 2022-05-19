@@ -56,7 +56,7 @@ Usually the amount received is greater than the amount sent, the difference is t
 The validator receives a share of the reward, according to the pool configuration parameter `validator_reward_share`.
 
 ```
-validator_reward = (reward * validator_reward_share) / 10000`
+validator_reward = (reward * validator_reward_share) / 10000;
 nominators_reward = reward - validator_reward;
 ```
 

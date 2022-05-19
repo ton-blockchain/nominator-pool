@@ -19,12 +19,10 @@ $3 parse-int =: max_nominators_count
 max_nominators_count 1 < abort" max_nominators_count cannot be less than 1"
 max_nominators_count 40 > abort"we do not recommend max_nominators_count higher than 40"
 $4 $>GR =: min_validator_stake
-min_validator_stake 10000000000000 < abort"we do not recommend min_validator_stake less than at least 10000"
+min_validator_stake 1000000000000 < abort"we do not recommend min_validator_stake less than at least 1000"
 $5 $>GR =: min_nominator_stake
 min_nominator_stake 100000000000 < abort"we do not recommend min_nominator_stake less than at least 100"
 $6 =: file-base
-
-// todo: check validator_reward_share <= 10000
 
 ."Creating new pool in workchain " wc . cr
 
