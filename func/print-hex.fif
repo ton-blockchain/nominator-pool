@@ -1,0 +1,6 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+"pool.fif" include
+2 boc+>B dup Bx. cr

@@ -12,51 +12,6 @@ Target tested configuration is 10k TONs minimum nominator stake and 40 nominator
 
 The number of nominators above 40 has not been tested and we strongly advise against setting the number above 40 until such tests have been carried out.
 
-## Get-method `get_pool_data` 
-
-Returns:
-
-1. state - uint - current state of nominator pool. 0 - does not participate in validation, 1 - sent a `new_stake` request to participate in the validation round, 2 - received a successful confirmation about participation in the validation round.   
-2. nominators_count - uint - current number of nominators in the pool.
-3. stake_amount_sent - nanotons - with such a stake amount, the pool participates in the current round of validation.
-4. validator_amount - nanotons - amount of coins owned by the validator.
-5. validator_address - immutable - uint - validator wallet address. To get the address do `"-1:" + dec_to_hex(validator_address)`.
-6. validator_reward_share - immutable - uint - what share of the reward from validation goes to the validator. `validator_reward = (reward * validator_reward_share) / 10000`.  For example set 4000 to get 40%.
-7. max_nominators_count - immutable - uint - the maximum number of nominators in this pool.
-8. min_validator_stake - immutable - nanotons - minimum stake for a validator in this pool.
-9. min_nominator_stake - immutable - nanotons - minimum stake for a nominator in this pool.
-10. nominators - Cell - raw dictionary with nominators.
-11. withdraw_requests - Cell - raw dictionary with withdrawal requests from nominators.
-12. stake_at - uint - ID of the validation round in which we are/are going to participate. Supposed start of next validation round (`utime_since`).  
-13. saved_validator_set_hash - uint - technical information.
-14. validator_set_changes_count - uint - technical information.
-15. validator_set_change_time - uint - technical information.
-16. stake_held_for - uint - technical information.
-17. config_proposal_votings - Cell - raw dictionary with config proposals votings.
-
-## Get-method `list_nominators`
-
-Returns list of current pool's nominators.
-
-Each entry contains:
-
-1. address - uint - nominator wallet address. To get the address do `"0:" + dec_to_hex(address)`.
-2. amount - nanotons - current active stake of the nominator.
-3. pending_deposit_amount - nanotons - deposit amount that will be added to the nominator's active stake at the next round of validation.
-4. withdraw_request - int - if `-1` then this nominator sent a request to withdraw all of his funds.
-
-## Get-method `get_nominator_data`
-
-It takes as an argument the address of the nominator and returns:
-
-1. amount - nanotons - current active stake of the nominator.
-2. pending_deposit_amount - nanotons - deposit amount that will be added to the nominator's active stake at the next round of validation.
-3. withdraw_request - int - if `-1` then this nominator sent a request to withdraw all of his funds.
-
-Throws an `86` error if there is no such nominator in the pool.
-
-To get a nominator for example with an address `EQA0i8-CdGnF_DhUHHf92R1ONH6sIA9vLZ_WLcCIhfBBXwtG` you need to convert address to raw form `0:348bcf827469c5fc38541c77fdd91d4e347eac200f6f2d9fd62dc08885f0415f`, drop `0:` and invoke `get_nominator_data 0x348bcf827469c5fc38541c77fdd91d4e347eac200f6f2d9fd62dc08885f0415f`.
-
 ## Reward distribution
 
 For each round of validation, the pool sends a stake to the elector smart contract.
@@ -76,7 +31,7 @@ Nominators share the remaining reward according to the size of their stakes.
 
 For example, if there are two nominators in the pool with stakes of 100k and 300k TON, then the first one will take 25% and the second 75% of the `nominators_reward`.
 
-In case of a large validation fine, when the amount received is less than the amount sent, the loss is debited from the validator's funds. 
+In case of a large validation fine, when the amount received is less than the amount sent, the loss is debited from the validator's funds.
 
 If the validator's funds are not enough, then the remaining loss will be deducted from the nominators in proportion to their stakes.
 
@@ -84,7 +39,7 @@ Note that the pool is designed in such a way that validator funds should always 
 
 ## Validator's responsibility
 
-A pool can participate in validation only if the validator funds exceeds the immutable pool parameter `min_validator_stake`.  
+A pool can participate in validation only if the validator funds exceeds the immutable pool parameter `min_validator_stake`.
 
 Also, the validator's funds must exceed the maximum possible fine for bad validation. The recommended fine is calculated based on the network config.
 
@@ -165,6 +120,52 @@ Some amount of tokens must be attached to this message in order to pay the netwo
 Votes are stored in the pool contract for 30 days.
 
 Only the validator and current nominators who have an active stake in the pool can vote.
+
+## Get-method `get_pool_data` 
+
+Returns:
+
+1. state - uint - current state of nominator pool. 0 - does not participate in validation, 1 - sent a `new_stake` request to participate in the validation round, 2 - received a successful confirmation about participation in the validation round.   
+2. nominators_count - uint - current number of nominators in the pool.
+3. stake_amount_sent - nanotons - with such a stake amount, the pool participates in the current round of validation.
+4. validator_amount - nanotons - amount of coins owned by the validator.
+5. validator_address - immutable - uint - validator wallet address. To get the address do `"-1:" + dec_to_hex(validator_address)`.
+6. validator_reward_share - immutable - uint - what share of the reward from validation goes to the validator. `validator_reward = (reward * validator_reward_share) / 10000`.  For example set 4000 to get 40%.
+7. max_nominators_count - immutable - uint - the maximum number of nominators in this pool.
+8. min_validator_stake - immutable - nanotons - minimum stake for a validator in this pool.
+9. min_nominator_stake - immutable - nanotons - minimum stake for a nominator in this pool.
+10. nominators - Cell - raw dictionary with nominators.
+11. withdraw_requests - Cell - raw dictionary with withdrawal requests from nominators.
+12. stake_at - uint - ID of the validation round in which we are/are going to participate. Supposed start of next validation round (`utime_since`).  
+13. saved_validator_set_hash - uint - technical information.
+14. validator_set_changes_count - uint - technical information.
+15. validator_set_change_time - uint - technical information.
+16. stake_held_for - uint - technical information.
+17. config_proposal_votings - Cell - raw dictionary with config proposals votings.
+
+## Get-method `list_nominators`
+
+Returns list of current pool's nominators.
+
+Each entry contains:
+
+1. address - uint - nominator wallet address. To get the address do `"0:" + dec_to_hex(address)`.
+2. amount - nanotons - current active stake of the nominator.
+3. pending_deposit_amount - nanotons - deposit amount that will be added to the nominator's active stake at the next round of validation.
+4. withdraw_request - int - if `-1` then this nominator sent a request to withdraw all of his funds.
+
+## Get-method `get_nominator_data`
+
+It takes as an argument the address of the nominator and returns:
+
+1. amount - nanotons - current active stake of the nominator.
+2. pending_deposit_amount - nanotons - deposit amount that will be added to the nominator's active stake at the next round of validation.
+3. withdraw_request - int - if `-1` then this nominator sent a request to withdraw all of his funds.
+
+Throws an `86` error if there is no such nominator in the pool.
+
+To get a nominator for example with an address `EQA0i8-CdGnF_DhUHHf92R1ONH6sIA9vLZ_WLcCIhfBBXwtG` you need to convert address to raw form `0:348bcf827469c5fc38541c77fdd91d4e347eac200f6f2d9fd62dc08885f0415f`, drop `0:` and invoke `get_nominator_data 0x348bcf827469c5fc38541c77fdd91d4e347eac200f6f2d9fd62dc08885f0415f`.
+
 
 ## Get-method `list_votes`
 
