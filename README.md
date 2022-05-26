@@ -12,6 +12,12 @@ Target tested configuration is 10k TONs minimum nominator stake and 40 nominator
 
 The number of nominators above 40 has not been tested and we strongly advise against setting the number above 40 until such tests have been carried out.
 
+## Fees
+
+Since the pool is located in the masterchain where the fees are high, it will take about 5 TON per validation round to operate the pool.
+
+Operational fees are paid by the validator.
+
 ## Reward distribution
 
 For each round of validation, the pool sends a stake to the elector smart contract.
@@ -82,6 +88,20 @@ If there are enough Toncoins on the balance of the nominator-pool, the withdrawa
 If there are not enough Toncoins on the nominator-pool balance, then a `withdraw_request` will be made for the nominator, and the Toncoins will be withdrawn after the end of the current validation round.
 
 The nominator can only withdraw all of his funds at once. Partial withdrawal not supported.
+
+## Validator withdraw
+
+The validator can withdraw from the pool all the Toncoins that does not belong to the nominators.
+
+Note that there should always be 10 TON on the pool balance - this is the minimum balance for the network storage fee. 10 TON can not be withdrawn.
+
+## Participants must keep their private keys
+
+If the nominator loses access to his wallet from which he made the deposit, he will not be able to withdraw his funds from the pool.
+
+If the validator loses access to his wallet, then he will not be able to withdraw his (validator's) funds from the pool.
+
+Loss of the wallet's private key of one pool participant does not affect other participants.
 
 ## Emergency withdrawal
 
